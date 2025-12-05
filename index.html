@@ -225,10 +225,16 @@
         setLogLevel('Debug');
 
         // --- Global Variables Provided by Canvas Environment ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
+        const firebaseConfig = {
+  apiKey: "AIzaSyAZWHiXH6lTZugXbvrOx5gCsKorMAsHcy8",
+  authDomain: "expense-tracker-307aa.firebaseapp.com",
+  projectId: "expense-tracker-307aa",
+  storageBucket: "expense-tracker-307aa.firebasestorage.app",
+  messagingSenderId: "959798127464",
+  appId: "1:959798127464:web:f1cec63888d59866d7c4dd"
+};
+const appId = firebaseConfig.appId;
+const initialAuthToken = null; // Set to null as a safe default for initial auth
         let app;
         let db;
         let auth;
