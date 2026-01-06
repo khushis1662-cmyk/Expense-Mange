@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Divinam Structuray - Expense Tracker</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        .text-primary { color: #003366; }
+        .bg-primary { background-color: #003366; }
+        .border-primary { border-color: #003366; }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen p-4 sm:p-8">
+        <header class="mb-8 p-6 bg-white shadow-lg rounded-2xl border-t-4 border-primary">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-primary">
+                <span class="mr-3">Divinam Structuray</span>
+                <span class="text-2xl font-light text-gray-600">Employee Expense Management</span>
+            </h1>
+            <p class="text-sm text-green-600 mt-2">● Connected & Ready</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1">
+                <div class="bg-white p-6 shadow-xl rounded-2xl sticky top-8">
+                    <h2 class="text-xl font-bold text-primary mb-4 border-b pb-2">Log New Expense</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Employee Name/ID *</label>
+                            <input type="text" id="employee-name" required placeholder="e.g., John Doe" 
+                                class="mt-1 block w-full rounded-lg border border-gray-300 p-2">
+                            <p class="text-xs text-gray-500 mt-1">Use a consistent name for filtering.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Project Name *</label>
+                            <input type="text" id="project-name" required placeholder="e.g., Highway Phase 2" 
+                                class="mt-1 block w-full rounded-lg border border-gray-300 p-2">
+                            <p class="text-xs text-gray-500 mt-1">Specify the project for this expense.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Checker/Verifier Name</label>
+                            <input type="text" id="checker-name" placeholder="Optional" 
+                                class="mt-1 block w-full rounded-lg border border-gray-300 p-2">
+                            <p class="text-xs text-gray-500 mt-1">Who verified/approved this bill?</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Category *</label>
+                            <select id="type" required class="mt-1 block w-full rounded-lg border border-gray-300 p-2">
+                                <option value="">Select Category</option>
+                                <option value="Travel">✈️ Travel</option>
+                                <option value="Food">🍔 Food</option>
+                                <option value="Fuel">⛽ Fuel</option>
+                                <option value="Other">💼 Other</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Date *</label>
+                            <input type="date" id="date" required 
+                                class="mt-1 block w-full rounded-lg border border-gray-300 p-2">
+                        </div>
+
+                        <div class="border-l-4 border-green-500 p-3 bg-green-50 rounded-lg">
+                            <label class="block text-sm font-medium text-gray-800">Cash/Advance Received (₹)</label>
+                            <input type="number" id="advance" min="0" step="0.01" value="0" 
+                                class="mt-1 block w-full rounded-lg border border-gray-300 p-2">
+                            <p class="text-xs text-green-700 mt-1">Cash or advance from company.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Amount Spent (₹) *</label>
+                            <input type="number" id="amount" required min="0.01" step="0.01" placeholder="450.75" 
+                                class="mt-1 block w-full rounded-lg border border-gray-300 p-2">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Description *</label>
+                            <textarea id="description" required rows="3" placeholder="Brief reason" 
+                                class="mt-1 block w-full rounded-lg border border-gray-300 p-2"></textarea>
+                        </div>
+
+                        <div class="border-l-4 border-blue-500 p-3 bg-blue-50 rounded-lg">
+                            <label class="block text-sm font-medium text-gray-800">
+                                📎 Attach Bill (Optional)
+                            </label>
+                            <input type="file" id="bill-attachment" accept="image/*,.pdf" 
+                                class="mt-2 block w-full text-sm">
+                            <p class="text-xs text-blue-700 mt-1">Max 5MB (JPG, PNG, PDF)</p>
+                            <div id="attachment-preview" class="hidden mt-2 p-2 bg-white rounded border">
+                                <span id="attachment-name" class="text-xs"></span>
+                                <button id="remove-attachment" class="ml-2 text-red-500 text-xs">Remove</button>
+                            </div>
+                        </div>
+
+                        <button id="submit-btn" 
+                            class="w-full py-3 px-4 rounded-lg bg-primary text-white hover:opacity-90 font-medium flex items-center justify-center">
+                            ➕ Add Expense
+                        </button>
+                    </div>
+
+                    <div id="error-message" class="hidden mt-3 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm"></div>
+                    <div id="success-message" class="hidden mt-3 p-3 bg-green-100 border border-green-400 text-green-700 rounded text-sm"></div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 space-y-8">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-xl border-l-4 border-red-500">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-500">Total Spent</span>
+                            <span class="text-2xl">💰</span>
+                        </div>
+                        <p id="total-expenses" class="text-3xl font-extrabold mt-1 text-primary">₹0.00</p>
+                    </div>
+                    
+                    <div id="net-balance-card" class="bg-white p-6 rounded-2xl shadow-xl border-l-4 border-gray-500">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-500">Net Balance</span>
+                            <span class="text-2xl" id="net-balance-icon">🧮</span>
+                        </div>
+                        <p id="net-balance" class="text-3xl font-extrabold mt-1 text-gray-600">₹0.00</p>
+                        <p id="net-balance-status" class="text-xs mt-1 text-gray-400">Spent - Advance</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl shadow-xl border-l-4 border-yellow-500">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-500">Entries</span>
+                            <span class="text-2xl">📊</span>
+                        </div>
+                        <p id="total-entries" class="text-3xl font-extrabold mt-1 text-primary">0</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <button id="export-csv-btn" 
+                        class="flex-1 py-3 px-4 rounded-lg border border-primary text-primary hover:bg-gray-50 flex items-center justify-center">
+                        📥 Export CSV
+                    </button>
+                    <button id="export-pdf-btn" 
+                        class="flex-1 py-3 px-4 rounded-lg bg-red-600 text-white hover:bg-red-700 flex items-center justify-center">
+                        📄 Export PDF
+                    </button>
+                </div>
+
+                <div class="bg-white p-6 shadow-xl rounded-2xl">
+                    <h2 class="text-xl font-bold text-primary mb-4 flex items-center">
+                        🔍 Filter
+                    </h2>
+                    <div class="flex items-center gap-3">
+                        <input type="text" id="employee-filter" placeholder="Filter by employee name" 
+                            class="flex-grow rounded-lg border border-gray-300 p-2">
+                        <button id="clear-filter-btn" class="text-gray-500 hover:text-red-600 text-xl">
+                            ❌
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 shadow-xl rounded-2xl overflow-x-auto">
+                    <h2 class="text-xl font-bold text-primary mb-4">Expense History</h2>
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Project</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase">Spent</th>
+                                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase">Advance</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Checker</th>
+                                <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase">Bill</th>
+                                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expense-list-body" class="bg-white divide-y divide-gray-200">
+                            <tr><td colspan="9" class="text-center py-4 text-gray-500">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let expenses = [];
+        let currentFile = null;
+
+        async function loadExpenses() {
+            try {
+                const result = await window.storage.list('expense:', true);
+                if (result && result.keys) {
+                    expenses = [];
+                    for (const key of result.keys) {
+                        const data = await window.storage.get(key, true);
+                        if (data && data.value) {
+                            expenses.push(JSON.parse(data.value));
+                        }
+                    }
+                    expenses.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    render();
+                }
+            } catch (error) {
+                console.error('Load error:', error);
+            }
+        }
+
+        document.getElementById('bill-attachment').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    showMessage('error', 'File too large (max 5MB)');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    currentFile = { data: event.target.result, name: file.name };
+                    document.getElementById('attachment-name').textContent = file.name;
+                    document.getElementById('attachment-preview').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('remove-attachment').addEventListener('click', () => {
+            currentFile = null;
+            document.getElementById('bill-attachment').value = '';
+            document.getElementById('attachment-preview').classList.add('hidden');
+        });
+
+        document.getElementById('submit-btn').addEventListener('click', async () => {
+            const employeeName = document.getElementById('employee-name').value.trim();
+            const projectName = document.getElementById('project-name').value.trim();
+            const type = document.getElementById('type').value;
+            const date = document.getElementById('date').value;
+            const amount = document.getElementById('amount').value;
+            const description = document.getElementById('description').value.trim();
+
+            if (!employeeName || !projectName || !type || !date || !amount || !description) {
+                showMessage('error', 'Please fill all required fields');
+                return;
+            }
+
+            try {
+                const expense = {
+                    id: Date.now().toString(),
+                    employeeName,
+                    projectName,
+                    checkerName: document.getElementById('checker-name').value.trim(),
+                    type,
+                    date,
+                    amount: parseFloat(amount),
+                    advance: parseFloat(document.getElementById('advance').value || 0),
+                    description,
+                    billFile: currentFile ? currentFile.data : null,
+                    billFileName: currentFile ? currentFile.name : '',
+                    createdAt: new Date().toISOString()
+                };
+
+                await window.storage.set(`expense:${expense.id}`, JSON.stringify(expense), true);
+                showMessage('success', 'Expense added successfully!');
+                
+                document.getElementById('employee-name').value = '';
+                document.getElementById('project-name').value = '';
+                document.getElementById('checker-name').value = '';
+                document.getElementById('type').value = '';
+                document.getElementById('amount').value = '';
+                document.getElementById('advance').value = '0';
+                document.getElementById('description').value = '';
+                document.getElementById('bill-attachment').value = '';
+                document.getElementById('attachment-preview').classList.add('hidden');
+                currentFile = null;
+                document.getElementById('date').valueAsDate = new Date();
+                
+                loadExpenses();
+                setTimeout(() => hideMessage(), 3000);
+            } catch (error) {
+                showMessage('error', 'Failed to add expense');
+            }
+        });
+
+        function showMessage(type, text) {
+            const errorEl = document.getElementById('error-message');
+            const successEl = document.getElementById('success-message');
+            errorEl.classList.add('hidden');
+            successEl.classList.add('hidden');
+            
+            if (type === 'error') {
+                errorEl.textContent = text;
+                errorEl.classList.remove('hidden');
+            } else {
+                successEl.textContent = text;
+                successEl.classList.remove('hidden');
+            }
+        }
+
+        function hideMessage() {
+            document.getElementById('error-message').classList.add('hidden');
+            document.getElementById('success-message').classList.add('hidden');
+        }
+
+        function render() {
+            const filter = document.getElementById('employee-filter').value.toLowerCase();
+            const filtered = expenses.filter(e => 
+                !filter || e.employeeName.toLowerCase().includes(filter)
+            );
+
+            const tbody = document.getElementById('expense-list-body');
+            tbody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-gray-500">No expenses found</td></tr>';
+            } else {
+                filtered.forEach(e => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50';
+                    tr.innerHTML = `
+                        <td class="px-3 py-4 text-sm font-medium text-primary">${e.employeeName}</td>
+                        <td class="px-3 py-4 text-sm">${e.projectName}</td>
+                        <td class="px-3 py-4 text-sm">${e.date}</td>
+                        <td class="px-3 py-4 text-sm">${e.type}</td>
+                        <td class="px-3 py-4 text-sm text-right text-red-600 font-bold">₹${e.amount.toFixed(2)}</td>
+                        <td class="px-3 py-4 text-sm text-right text-green-600 font-bold">₹${e.advance.toFixed(2)}</td>
+                        <td class="px-3 py-4 text-sm">${e.checkerName || '-'}</td>
+                        <td class="px-3 py-4 text-center">
+                            ${e.billFile ? `<a href="${e.billFile}" download="${e.billFileName}" class="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-xs font-medium">📎 View/Download</a>` : '<span class="text-gray-400 text-xs">No Bill</span>'}
+                        </td>
+                        <td class="px-3 py-4 text-right">
+                            <button onclick="deleteExpense('${e.id}')" class="text-red-600 hover:text-red-900">
+                                🗑️
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            const totalSpent = filtered.reduce((sum, e) => sum + e.amount, 0);
+            const totalAdv = filtered.reduce((sum, e) => sum + e.advance, 0);
+            const netBalance = totalSpent - totalAdv;
+
+            document.getElementById('total-expenses').textContent = `₹${totalSpent.toFixed(2)}`;
+            document.getElementById('total-entries').textContent = filtered.length;
+            document.getElementById('net-balance').textContent = `₹${Math.abs(netBalance).toFixed(2)}`;
+
+            const card = document.getElementById('net-balance-card');
+            const balanceEl = document.getElementById('net-balance');
+            const iconEl = document.getElementById('net-balance-icon');
+            const statusEl = document.getElementById('net-balance-status');
+
+            card.classList.remove('border-red-500', 'border-green-500', 'border-gray-500');
+            balanceEl.classList.remove('text-red-600', 'text-green-600', 'text-gray-600');
+
+            if (netBalance > 0) {
+                card.classList.add('border-green-500');
+                balanceEl.classList.add('text-green-600');
+                iconEl.textContent = '💚';
+                statusEl.textContent = 'Payable to Employee';
+            } else if (netBalance < 0) {
+                card.classList.add('border-red-500');
+                balanceEl.classList.add('text-red-600');
+                iconEl.textContent = '❤️';
+                statusEl.textContent = 'Refundable to Company';
+            } else {
+                card.classList.add('border-gray-500');
+                balanceEl.classList.add('text-gray-600');
+                iconEl.textContent = '🧮';
+                statusEl.textContent = 'Balanced';
+            }
+        }
+
+        async function deleteExpense(id) {
+            if (confirm('Delete this expense?')) {
+                await window.storage.delete(`expense:${id}`, true);
+                showMessage('success', 'Deleted');
+                loadExpenses();
+                setTimeout(() => hideMessage(), 2000);
+            }
+        }
+
+        document.getElementById('employee-filter').addEventListener('input', render);
+        document.getElementById('clear-filter-btn').addEventListener('click', () => {
+            document.getElementById('employee-filter').value = '';
+            render();
+        });
+
+        document.getElementById('export-csv-btn').addEventListener('click', () => {
+            const filter = document.getElementById('employee-filter').value.toLowerCase();
+            const data = expenses.filter(e => !filter || e.employeeName.toLowerCase().includes(filter));
+            if (data.length === 0) { alert('No data'); return; }
+
+            const rows = [
+                ["Employee", "Project", "Date", "Category", "Spent", "Advance", "Checker", "Bill"],
+                ...data.map(e => [e.employeeName, e.projectName, e.date, e.type, e.amount, e.advance, e.checkerName || '', e.billFile ? 'Yes' : 'No'])
+            ];
+
+            const csv = rows.map(r => r.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `expenses_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        });
+
+        document.getElementById('export-pdf-btn').addEventListener('click', () => {
+            const filter = document.getElementById('employee-filter').value.toLowerCase();
+            const data = expenses.filter(e => !filter || e.employeeName.toLowerCase().includes(filter));
+            if (data.length === 0) { alert('No data'); return; }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text("Expense Report", 14, 20);
+            doc.autoTable({
+                startY: 30,
+                head: [["Employee", "Project", "Date", "Type", "Spent", "Advance"]],
+                body: data.map(e => [e.employeeName, e.projectName, e.date, e.type, `₹${e.amount.toFixed(2)}`, `₹${e.advance.toFixed(2)}`])
+            });
+            doc.save(`expenses_${new Date().toISOString().split('T')[0]}.pdf`);
+        });
+
+        window.onload = () => {
+            document.getElementById('date').valueAsDate = new Date();
+            loadExpenses();
+        };
+    </script>
+</body>
+</html>
