@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Divinam Structuray - Expense Tracker</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     
     <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.25/dist/jspdf.plugin.autotable.min.js"></script>
-    
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         body {
@@ -18,213 +19,215 @@
         }
         .text-primary { color: #003366; }
         .bg-primary { background-color: #003366; }
-        .border-primary { border-color: #003366; }
+        .border-accent { border-color: #FFD700; }
     </style>
 </head>
 <body>
-    <div class="min-h-screen p-4 sm:p-8">
+
+    <div id="app" class="min-h-screen p-4 sm:p-8">
         <header class="mb-8 p-6 bg-white shadow-lg rounded-2xl border-t-4 border-primary">
-            <h1 class="text-3xl sm:text-4xl font-extrabold text-primary">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-primary flex items-center">
                 <span class="mr-3">Divinam Structuray</span>
-                <span class="text-2xl font-light text-gray-600">Employee Expense Management</span>
+                <span class="text-2xl text-accent font-light italic text-gray-600">Expense Management</span>
             </h1>
-            <p class="text-sm text-green-600 mt-2">● Connected & Ready</p>
+            <p id="auth-status" class="text-sm text-gray-500 mt-2">Loading user session...</p>
+            <p id="user-id-display" class="text-xs text-gray-400 mt-1 truncate">User ID: N/A</p>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
             <div class="lg:col-span-1">
                 <div class="bg-white p-6 shadow-xl rounded-2xl sticky top-8">
                     <h2 class="text-xl font-bold text-primary mb-4 border-b pb-2">Log New Expense</h2>
                     
-                    <div class="space-y-4">
+                    <form id="expense-form" class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Employee Name/ID *</label>
-                            <input type="text" id="employee-name" required placeholder="e.g., John Doe" 
-                                class="mt-1 block w-full rounded-lg border border-gray-300 p-2">
+                            <label for="employee-name" class="block text-sm font-medium text-gray-700">Employee Name/ID *</label>
+                            <input type="text" id="employee-name" required placeholder="e.g., John Doe" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary p-2 border">
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Project Name *</label>
-                            <input type="text" id="project-name" required placeholder="e.g., Project Site" 
-                                class="mt-1 block w-full rounded-lg border border-gray-300 p-2">
+                            <label for="project-name" class="block text-sm font-medium text-gray-700">Project Name *</label>
+                            <input type="text" id="project-name" required placeholder="e.g., Barsana" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary p-2 border">
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Checker/Verifier Name</label>
-                            <input type="text" id="checker-name" placeholder="Optional" 
-                                class="mt-1 block w-full rounded-lg border border-gray-300 p-2">
+                            <label for="checker-name" class="block text-sm font-medium text-gray-700">Checker/Verifier Name</label>
+                            <input type="text" id="checker-name" placeholder="Optional" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary p-2 border">
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Category *</label>
-                            <select id="type" required class="mt-1 block w-full rounded-lg border border-gray-300 p-2">
-                                <option value="">Select Category</option>
+                            <label for="type" class="block text-sm font-medium text-gray-700">Category *</label>
+                            <select id="type" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary p-2 border">
+                                <option value="" disabled selected>Select Category</option>
                                 <option value="Travel">✈️ Travel</option>
-                                <option value="Food">🍔 Food</option>
-                                <option value="Fuel">⛽ Fuel</option>
-                                <option value="Other">💼 Other</option>
+                                <option value="Food">🍔 Food / Meals</option>
+                                <option value="Fuel">⛽ Fuel / Mileage</option>
+                                <option value="Other">💼 Other Admin</option>
                             </select>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Date *</label>
-                            <input type="date" id="date" required 
-                                class="mt-1 block w-full rounded-lg border border-gray-300 p-2">
+                            <label for="date" class="block text-sm font-medium text-gray-700">Date *</label>
+                            <input type="date" id="date" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary p-2 border">
                         </div>
-
-                        <div class="border-l-4 border-green-500 p-3 bg-green-50 rounded-lg">
-                            <label class="block text-sm font-medium text-gray-800">Cash/Advance Received (₹)</label>
-                            <input type="number" id="advance" min="0" step="0.01" value="0" 
-                                class="mt-1 block w-full rounded-lg border border-gray-300 p-2">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Amount Spent (₹) *</label>
-                            <input type="number" id="amount" required min="0.01" step="0.01" placeholder="450.75" 
-                                class="mt-1 block w-full rounded-lg border border-gray-300 p-2">
+                        
+                        <div id="advance-group" class="border-l-4 border-green-500 p-2 bg-green-50 rounded-lg">
+                            <label class="block text-sm font-medium text-gray-800" for="advance">Cash/Advance Received (INR)</label>
+                            <input type="number" id="advance" min="0" step="0.01" value="0.00" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-2 border">
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Description *</label>
-                            <textarea id="description" required rows="3" placeholder="Brief reason" 
-                                class="mt-1 block w-full rounded-lg border border-gray-300 p-2"></textarea>
+                            <label for="amount" class="block text-sm font-medium text-gray-700">Amount Spent (INR) *</label>
+                            <input type="number" id="amount" required min="0.01" step="0.01" placeholder="0.00" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-2 border">
+                        </div>
+
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-700">Description *</label>
+                            <textarea id="description" required rows="3" placeholder="Brief details" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-2 border"></textarea>
                         </div>
 
                         <div class="border-l-4 border-blue-500 p-3 bg-blue-50 rounded-lg">
-                            <label class="block text-sm font-medium text-gray-800">📎 Attach Bill (Optional)</label>
+                            <label class="block text-sm font-medium text-gray-800">📎 Attach Bill Receipt (Optional)</label>
                             <input type="file" id="bill-attachment" accept="image/*,.pdf" class="mt-2 block w-full text-sm">
-                            <div id="attachment-preview" class="hidden mt-2 p-2 bg-white rounded border">
-                                <span id="attachment-name" class="text-xs"></span>
-                                <button id="remove-attachment" class="ml-2 text-red-500 text-xs">Remove</button>
+                            <div id="attachment-preview" class="hidden mt-2 p-2 bg-white rounded border flex items-center justify-between">
+                                <span id="attachment-name" class="text-xs text-gray-600 truncate max-w-[180px]"></span>
+                                <button type="button" id="remove-attachment" class="text-red-500 text-xs font-bold hover:underline">Remove</button>
                             </div>
                         </div>
-
-                        <button id="submit-btn" 
-                            class="w-full py-3 px-4 rounded-lg bg-primary text-white hover:opacity-90 font-medium flex items-center justify-center">
-                            ➕ Add Expense
+                        
+                        <button type="submit" id="submit-btn" class="w-full py-3 px-4 rounded-lg shadow-md text-sm font-medium text-white bg-primary hover:bg-opacity-90 flex items-center justify-center">
+                            <span data-lucide="plus-circle" class="w-5 h-5 mr-2"></span> Add Expense
                         </button>
-                    </div>
-
-                    <div id="error-message" class="hidden mt-3 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm"></div>
-                    <div id="success-message" class="hidden mt-3 p-3 bg-green-100 border border-green-400 text-green-700 rounded text-sm"></div>
+                    </form>
                 </div>
             </div>
 
             <div class="lg:col-span-2 space-y-8">
+                
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
                     <div class="bg-white p-6 rounded-2xl shadow-xl border-l-4 border-red-500">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium text-gray-500">Total Spent</span>
-                            <span class="text-2xl">💰</span>
-                        </div>
+                        <span class="text-sm font-medium text-gray-500">Total Spent</span>
                         <p id="total-expenses" class="text-3xl font-extrabold mt-1 text-primary">₹0.00</p>
                     </div>
                     
-                    <div id="net-balance-card" class="bg-white p-6 rounded-2xl shadow-xl border-l-4 border-gray-500">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium text-gray-500">Net Balance</span>
-                            <span class="text-2xl" id="net-balance-icon">🧮</span>
-                        </div>
+                    <div id="net-balance-card" class="bg-white p-6 rounded-2xl shadow-xl border-l-4 border-gray-400">
+                        <span class="text-sm font-medium text-gray-500">Net Balance Breakdown</span>
                         <p id="net-balance" class="text-3xl font-extrabold mt-1 text-gray-600">₹0.00</p>
                         <p id="net-balance-status" class="text-xs mt-1 text-gray-400">Spent - Advance</p>
                     </div>
 
                     <div class="bg-white p-6 rounded-2xl shadow-xl border-l-4 border-yellow-500">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium text-gray-500">Entries</span>
-                            <span class="text-2xl">📊</span>
-                        </div>
+                        <span class="text-sm font-medium text-gray-500">Entries</span>
                         <p id="total-entries" class="text-3xl font-extrabold mt-1 text-primary">0</p>
                     </div>
                 </div>
 
-                <div class="flex gap-4">
-                    <button id="export-excel-btn" 
-                        class="flex-1 py-3 px-4 rounded-lg border border-green-600 text-green-700 hover:bg-green-50 flex items-center justify-center font-medium">
-                        📊 Export Excel (.xlsx)
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button id="export-csv-btn" class="flex-1 py-3 px-4 rounded-lg shadow-md text-sm font-medium text-green-700 border border-green-600 bg-white hover:bg-green-50 flex items-center justify-center">
+                        <span data-lucide="file-text" class="w-5 h-5 mr-2"></span> Export Excel (.xlsx)
                     </button>
-                    <button id="export-pdf-btn" 
-                        class="flex-1 py-3 px-4 rounded-lg bg-red-600 text-white hover:bg-red-700 flex items-center justify-center font-medium">
-                        📄 Export PDF Report
+                    <button id="export-pdf-btn" class="flex-1 py-3 px-4 rounded-lg shadow-md text-sm font-medium text-white bg-red-600 border border-red-600 hover:bg-red-700 flex items-center justify-center">
+                        <span data-lucide="file" class="w-5 h-5 mr-2"></span> Export PDF Report
                     </button>
                 </div>
 
                 <div class="bg-white p-6 shadow-xl rounded-2xl">
-                    <h2 class="text-xl font-bold text-primary mb-4">🔍 Filter</h2>
-                    <div class="flex items-center gap-3">
-                        <input type="text" id="employee-filter" placeholder="Filter by employee name" 
-                            class="flex-grow rounded-lg border border-gray-300 p-2">
-                        <button id="clear-filter-btn" class="text-gray-500 hover:text-red-600 text-xl">❌</button>
+                    <h2 class="text-xl font-bold text-primary mb-4 border-b pb-2 flex items-center">
+                        <span data-lucide="filter" class="w-6 h-6 mr-2"></span> Filter Records
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase">Employee Name</label>
+                            <input type="text" id="employee-filter" placeholder="Search name..." class="mt-1 w-full rounded-lg border-gray-300 shadow-sm p-2 border">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase">From Date</label>
+                            <input type="date" id="start-date-filter" class="mt-1 w-full rounded-lg border-gray-300 shadow-sm p-2 border">
+                        </div>
+                        <div class="relative">
+                            <label class="block text-xs font-semibold text-gray-500 uppercase">To Date</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="date" id="end-date-filter" class="mt-1 w-full rounded-lg border-gray-300 shadow-sm p-2 border">
+                                <button id="clear-filter-btn" class="text-gray-400 hover:text-red-600 mt-1" title="Clear Filters">
+                                    <span data-lucide="refresh-ccw" class="w-5 h-5"></span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="bg-white p-6 shadow-xl rounded-2xl overflow-x-auto">
-                    <h2 class="text-xl font-bold text-primary mb-4">Expense History</h2>
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
-                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Project</th>
-                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase">Spent</th>
-                                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase">Advance</th>
-                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Checker</th>
-                                <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase">Bill</th>
-                                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="expense-list-body" class="bg-white divide-y divide-gray-200">
-                            <tr><td colspan="9" class="text-center py-4 text-gray-500">Loading...</td></tr>
-                        </tbody>
-                    </table>
+                <div class="bg-white p-6 shadow-xl rounded-2xl">
+                    <h2 class="text-xl font-bold text-primary mb-4 border-b pb-2">Monthly Breakdown</h2>
+                    <div id="monthly-summary-body" class="space-y-4">
+                        <p class="text-gray-500 text-sm italic">Calculating metrics...</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 shadow-xl rounded-2xl">
+                    <h2 class="text-xl font-bold text-primary mb-4 border-b pb-2">Transaction History</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
+                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Project</th>
+                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase">Spent</th>
+                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase">Adv.</th>
+                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Verifier</th>
+                                    <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase">Receipt</th>
+                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expense-list-body" class="bg-white divide-y divide-gray-200">
+                                <tr><td colspan="10" class="text-center py-4 text-gray-500 italic">Syncing database node...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-        let expenses = [];
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, addDoc, deleteDoc, onSnapshot, collection, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAZWHiXH6lTZugXbvrOx5gCsKorMAsHcy8",
+            authDomain: "expense-tracker-307aa.firebaseapp.com",
+            projectId: "expense-tracker-307aa",
+            storageBucket: "expense-tracker-307aa.firebasestorage.app",
+            messagingSenderId: "959798127464",
+            appId: "1:959798127464:web:f1cec63888d59866d7c4dd"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        let userId = null;
+        let allExpenses = [];
         let currentFile = null;
 
-        if (!window.storage) {
-            window.storage = {
-                get: async (key) => ({ value: localStorage.getItem(key) }),
-                set: async (key, val) => localStorage.setItem(key, val),
-                delete: async (key) => localStorage.removeItem(key),
-                list: async (prefix) => {
-                    const keys = Object.keys(localStorage).filter(k => k.startsWith(prefix));
-                    return { keys };
-                }
-            };
-        }
+        // DOM Element Mapping Engine
+        const expenseForm = document.getElementById('expense-form');
+        const employeeFilterInput = document.getElementById('employee-filter');
+        const startDateFilter = document.getElementById('start-date-filter');
+        const endDateFilter = document.getElementById('end-date-filter');
+        const clearFilterBtn = document.getElementById('clear-filter-btn');
+        const expenseListBody = document.getElementById('expense-list-body');
 
-        async function loadExpenses() {
-            try {
-                const result = await window.storage.list('expense:');
-                if (result && result.keys) {
-                    expenses = [];
-                    for (const key of result.keys) {
-                        const data = await window.storage.get(key);
-                        if (data && data.value) {
-                            try {
-                                expenses.push(JSON.parse(data.value));
-                            } catch(e) { console.error(e); }
-                        }
-                    }
-                    expenses.sort((a, b) => new Date(b.date) - new Date(a.date));
-                    render();
-                }
-            } catch (error) {
-                console.error('Load error:', error);
-            }
-        }
-
+        // Attachment File Binary Handlers
         document.getElementById('bill-attachment').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
-                if (file.size > 5 * 1024 * 1024) {
-                    showMessage('error', 'File too large (max 5MB)');
+                if (file.size > 4 * 1024 * 1024) {
+                    alert('Receipt exceeds file threshold limit size (Max 4MB)');
+                    e.target.value = '';
                     return;
                 }
                 const reader = new FileReader();
@@ -242,258 +245,273 @@
             document.getElementById('bill-attachment').value = '';
             document.getElementById('attachment-preview').classList.add('hidden');
         });
-
-        document.getElementById('submit-btn').addEventListener('click', async () => {
-            const employeeName = document.getElementById('employee-name').value.trim();
-            const projectName = document.getElementById('project-name').value.trim();
-            const type = document.getElementById('type').value;
-            const date = document.getElementById('date').value;
-            const amount = document.getElementById('amount').value;
-            const description = document.getElementById('description').value.trim();
-
-            if (!employeeName || !projectName || !type || !date || !amount || !description) {
-                showMessage('error', 'Please fill all required fields');
-                return;
-            }
-
-            try {
-                const expense = {
-                    id: Date.now().toString(),
-                    employeeName,
-                    projectName,
-                    checkerName: document.getElementById('checker-name').value.trim(),
-                    type,
-                    date,
-                    amount: parseFloat(amount),
-                    advance: parseFloat(document.getElementById('advance').value || 0),
-                    description,
-                    billFile: currentFile ? currentFile.data : null,
-                    billFileName: currentFile ? currentFile.name : '',
-                    createdAt: new Date().toISOString()
-                };
-
-                await window.storage.set(`expense:${expense.id}`, JSON.stringify(expense));
-                showMessage('success', 'Expense added successfully!');
-                
-                document.getElementById('employee-name').value = '';
-                document.getElementById('project-name').value = '';
-                document.getElementById('checker-name').value = '';
-                document.getElementById('type').value = '';
-                document.getElementById('amount').value = '';
-                document.getElementById('advance').value = '0';
-                document.getElementById('description').value = '';
-                document.getElementById('bill-attachment').value = '';
-                document.getElementById('attachment-preview').classList.add('hidden');
-                currentFile = null;
-                document.getElementById('date').valueAsDate = new Date();
-                
-                loadExpenses();
-                setTimeout(() => hideMessage(), 3000);
-            } catch (error) {
-                showMessage('error', 'Failed to add expense');
+        
+        // Firebase Authorization Hook State Listener
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userId = user.uid;
+                document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
+                document.getElementById('auth-status').textContent = '🟢 Cloud Live Sync Established';
+                document.getElementById('auth-status').className = "text-sm text-green-600 font-semibold mt-2";
+                listenForExpenses();
             }
         });
 
-        function showMessage(type, text) {
-            const errorEl = document.getElementById('error-message');
-            const successEl = document.getElementById('success-message');
-            errorEl.classList.add('hidden');
-            successEl.classList.add('hidden');
-            
-            if (type === 'error') {
-                errorEl.textContent = text;
-                errorEl.classList.remove('hidden');
-            } else {
-                successEl.textContent = text;
-                successEl.classList.remove('hidden');
-            }
+        function listenForExpenses() {
+            const path = `artifacts/${firebaseConfig.appId}/public/data/expenses`;
+            onSnapshot(collection(db, path), (snapshot) => {
+                allExpenses = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    month: doc.data().date ? doc.data().date.substring(0, 7) : 'Unknown'
+                }));
+                applyFilterAndRender();
+            });
         }
 
-        function hideMessage() {
-            document.getElementById('error-message').classList.add('hidden');
-            document.getElementById('success-message').classList.add('hidden');
+        function applyFilterAndRender() {
+            const nameVal = employeeFilterInput.value.trim().toLowerCase();
+            const startVal = startDateFilter.value;
+            const endVal = endDateFilter.value;
+
+            allExpenses.sort((a, b) => b.date.localeCompare(a.date));
+
+            const filtered = allExpenses.filter(exp => {
+                const matchesName = !nameVal || exp.employeeName?.toLowerCase().includes(nameVal);
+                const matchesStart = !startVal || exp.date >= startVal;
+                const matchesEnd = !endVal || exp.date <= endVal;
+                return matchesName && matchesStart && matchesEnd;
+            });
+
+            renderUI(filtered);
         }
 
-        function render() {
-            const filter = document.getElementById('employee-filter').value.toLowerCase();
-            const filtered = expenses.filter(e => 
-                !filter || e.employeeName.toLowerCase().includes(filter)
-            );
+        function renderUI(data) {
+            expenseListBody.innerHTML = '';
+            let totalSpent = 0, totalAdv = 0;
+            const monthlyMap = {};
 
-            const tbody = document.getElementById('expense-list-body');
-            tbody.innerHTML = '';
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-gray-500">No expenses found</td></tr>';
+            if (data.length === 0) {
+                expenseListBody.innerHTML = `<tr><td colspan="10" class="text-center py-6 text-sm text-gray-400 italic">No entry logs matches applied pipeline filters</td></tr>`;
             } else {
-                filtered.forEach(e => {
-                    const tr = document.createElement('tr');
-                    tr.className = 'hover:bg-gray-50';
-                    tr.innerHTML = `
-                        <td class="px-3 py-4 text-sm font-medium text-primary">${e.employeeName}</td>
-                        <td class="px-3 py-4 text-sm">${e.projectName}</td>
-                        <td class="px-3 py-4 text-sm">${e.date}</td>
-                        <td class="px-3 py-4 text-sm">${e.type}</td>
-                        <td class="px-3 py-4 text-sm text-right text-red-600 font-bold">₹${e.amount.toFixed(2)}</td>
-                        <td class="px-3 py-4 text-sm text-right text-green-600 font-bold">₹${e.advance.toFixed(2)}</td>
-                        <td class="px-3 py-4 text-sm">${e.checkerName || '-'}</td>
+                data.forEach(exp => {
+                    totalSpent += exp.amount || 0;
+                    totalAdv += exp.advance || 0;
+                    monthlyMap[exp.month] = (monthlyMap[exp.month] || 0) + (exp.amount || 0);
+
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-gray-50 transition-colors';
+                    row.innerHTML = `
+                        <td class="px-3 py-4 text-sm font-semibold text-gray-900">${exp.employeeName || '-'}</td>
+                        <td class="px-3 py-4 text-sm text-gray-600">${exp.projectName || 'Default'}</td>
+                        <td class="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">${exp.date || '-'}</td>
+                        <td class="px-3 py-4 text-sm text-gray-500">${exp.type || '-'}</td>
+                        <td class="px-3 py-4 text-sm text-gray-500 truncate max-w-[140px]" title="${exp.description}">${exp.description || '-'}</td>
+                        <td class="px-3 py-4 text-sm text-right font-bold text-red-600">₹${(exp.amount || 0).toFixed(2)}</td>
+                        <td class="px-3 py-4 text-sm text-right text-green-600 font-medium">₹${(exp.advance || 0).toFixed(2)}</td>
+                        <td class="px-3 py-4 text-sm text-gray-500">${exp.checkerName || '-'}</td>
                         <td class="px-3 py-4 text-center">
-                            ${e.billFile ? `<a href="${e.billFile}" download="${e.billFileName}" class="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-xs font-medium">📎 Download</a>` : '<span class="text-gray-400 text-xs">No Bill</span>'}
+                            ${exp.billFile ? `<a href="${exp.billFile}" download="${exp.billFileName || 'Receipt'}" class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 text-xs font-medium border border-blue-200">📎 Download</a>` : '<span class="text-gray-400 text-xs italic">None</span>'}
                         </td>
                         <td class="px-3 py-4 text-right">
-                            <button onclick="deleteExpense('${e.id}')" class="text-red-600 hover:text-red-900">🗑️</button>
+                            <button onclick="window.deleteExp('${exp.id}')" class="text-red-400 hover:text-red-600 p-1 transition-colors"><span data-lucide="trash-2" class="w-4 h-4"></span></button>
                         </td>
                     `;
-                    tbody.appendChild(tr);
+                    expenseListBody.appendChild(row);
                 });
             }
 
-            const totalSpent = filtered.reduce((sum, e) => sum + e.amount, 0);
-            const totalAdv = filtered.reduce((sum, e) => sum + e.advance, 0);
-            const netBalance = totalSpent - totalAdv;
-
-            document.getElementById('total-expenses').textContent = `₹${totalSpent.toFixed(2)}`;
-            document.getElementById('total-entries').textContent = filtered.length;
-            document.getElementById('net-balance').textContent = `₹${Math.abs(netBalance).toFixed(2)}`;
-
-            const card = document.getElementById('net-balance-card');
-            const balanceEl = document.getElementById('net-balance');
-            const iconEl = document.getElementById('net-balance-icon');
-            const statusEl = document.getElementById('net-balance-status');
-
-            card.classList.remove('border-red-500', 'border-green-500', 'border-gray-500');
-            balanceEl.classList.remove('text-red-600', 'text-green-600', 'text-gray-600');
-
-            if (netBalance > 0) {
-                card.classList.add('border-green-500');
-                balanceEl.classList.add('text-green-600');
-                iconEl.textContent = '💚';
-                statusEl.textContent = 'Payable to Employee';
-            } else if (netBalance < 0) {
-                card.classList.add('border-red-500');
-                balanceEl.classList.add('text-red-600');
-                iconEl.textContent = '❤️';
-                statusEl.textContent = 'Refundable to Company';
+            // Summary Analytical Widgets Updates
+            document.getElementById('total-expenses').textContent = `₹${totalSpent.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+            document.getElementById('total-entries').textContent = data.length;
+            
+            const net = totalSpent - totalAdv;
+            const netEl = document.getElementById('net-balance');
+            const netCard = document.getElementById('net-balance-card');
+            const netStatus = document.getElementById('net-balance-status');
+            
+            netEl.textContent = `₹${Math.abs(net).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+            netCard.classList.remove('border-red-500', 'border-green-500', 'border-gray-400');
+            
+            if (net > 0) {
+                netCard.classList.add('border-green-500');
+                netEl.className = "text-3xl font-extrabold mt-1 text-green-600";
+                netStatus.textContent = "Payable to Employee";
+            } else if (net < 0) {
+                netCard.classList.add('border-red-500');
+                netEl.className = "text-3xl font-extrabold mt-1 text-red-600";
+                netStatus.textContent = "Refundable to Company";
             } else {
-                card.classList.add('border-gray-500');
-                balanceEl.classList.add('text-gray-600');
-                iconEl.textContent = '🧮';
-                statusEl.textContent = 'Balanced';
+                netCard.classList.add('border-gray-400');
+                netEl.className = "text-3xl font-extrabold mt-1 text-gray-600";
+                netStatus.textContent = "Balanced Settlement";
             }
+
+            // Monthly Summary Cards Renderer Template
+            const monthBody = document.getElementById('monthly-summary-body');
+            monthBody.innerHTML = Object.keys(monthlyMap).sort().reverse().map(m => `
+                <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border-l-4 border-blue-900">
+                    <span class="font-bold text-slate-700">${m}</span>
+                    <span class="font-mono font-bold text-blue-950">₹${monthlyMap[m].toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                </div>
+            `).join('') || '<p class="text-gray-400 text-sm italic">No active month transactions compiled</p>';
+
+            lucide.createIcons();
         }
 
-        async function deleteExpense(id) {
-            if (confirm('Delete this expense?')) {
-                await window.storage.delete(`expense:${id}`);
-                showMessage('success', 'Deleted successfully');
-                loadExpenses();
-                setTimeout(() => hideMessage(), 2000);
+        // Realtime Filters Registration Hooks
+        employeeFilterInput.addEventListener('input', applyFilterAndRender);
+        startDateFilter.addEventListener('input', applyFilterAndRender);
+        endDateFilter.addEventListener('input', applyFilterAndRender);
+        clearFilterBtn.onclick = () => {
+            employeeFilterInput.value = '';
+            startDateFilter.value = '';
+            endDateFilter.value = '';
+            applyFilterAndRender();
+        };
+
+        // Write Operations Record Committer Pipeline
+        expenseForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            
+            try {
+                const path = `artifacts/${firebaseConfig.appId}/public/data/expenses`;
+                await addDoc(collection(db, path), {
+                    employeeName: document.getElementById('employee-name').value.trim(),
+                    projectName: document.getElementById('project-name').value.trim(),
+                    checkerName: document.getElementById('checker-name').value.trim(),
+                    type: document.getElementById('type').value,
+                    date: document.getElementById('date').value,
+                    amount: parseFloat(document.getElementById('amount').value),
+                    advance: parseFloat(document.getElementById('advance').value || 0),
+                    description: document.getElementById('description').value.trim(),
+                    billFile: currentFile ? currentFile.data : null,
+                    billFileName: currentFile ? currentFile.name : '',
+                    createdAt: serverTimestamp()
+                });
+                
+                // Form Reset Pipeline Lifecycle
+                expenseForm.reset();
+                document.getElementById('advance').value = "0.00";
+                document.getElementById('attachment-preview').classList.add('hidden');
+                currentFile = null;
+                document.getElementById('date').valueAsDate = new Date();
+            } catch (err) {
+                alert("Database Engine Error: " + err.message);
+            } finally {
+                btn.disabled = false;
             }
-        }
+        };
 
-        document.getElementById('employee-filter').addEventListener('input', render);
-        document.getElementById('clear-filter-btn').addEventListener('click', () => {
-            document.getElementById('employee-filter').value = '';
-            render();
-        });
+        window.deleteExp = async (id) => {
+            if (confirm("Permanently delete this structural expense record entry from cloud matrix?")) {
+                const path = `artifacts/${firebaseConfig.appId}/public/data/expenses`;
+                await deleteDoc(doc(db, path, id));
+            }
+        };
 
-        // Export Excel Module
-        document.getElementById('export-excel-btn').addEventListener('click', () => {
+        // --- Core Excel Sheet Exporter Engine ---
+        document.getElementById('export-csv-btn').addEventListener('click', () => {
             if (typeof XLSX === 'undefined') {
-                alert('Excel Engine is still initializing. Please wait 2 seconds and click again.');
+                alert('Initializing spreadsheet arrays. Trigger again in 2 seconds.');
                 return;
             }
-            const filter = document.getElementById('employee-filter').value.toLowerCase();
-            const filteredData = expenses.filter(e => !filter || e.employeeName.toLowerCase().includes(filter));
+            const nameVal = employeeFilterInput.value.trim().toLowerCase();
+            const filteredData = allExpenses.filter(e => !nameVal || e.employeeName?.toLowerCase().includes(nameVal));
             
-            if (filteredData.length === 0) { 
-                alert('No data entries found to export.'); 
-                return; 
-            }
+            if (filteredData.length === 0) { alert('No structured records context found to export.'); return; }
 
-            const wsData = filteredData.map(e => ({
+            const structuredRows = filteredData.map(e => ({
                 "Employee Name": e.employeeName,
-                "Project Name": e.projectName,
-                "Date": e.date,
-                "Category": e.type,
+                "Project Context": e.projectName || 'N/A',
+                "Transaction Date": e.date,
+                "Category Hub": e.type,
                 "Spent Amount (INR)": e.amount,
-                "Advance Received (INR)": e.advance,
-                "Net Balance (INR)": e.amount - e.advance,
-                "Verifier/Checker": e.checkerName || 'N/A',
-                "Description": e.description,
-                "Has Bill Attached": e.billFile ? 'Yes' : 'No'
+                "Advance Matrix (INR)": e.advance,
+                "Net Balanced Flow": e.amount - e.advance,
+                "Supervising Checker": e.checkerName || 'N/A',
+                "Structural Description": e.description,
+                "Receipt Vault Blob": e.billFile ? 'Attached Base64 File' : 'No Attachment Documentation'
             }));
 
             const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.json_to_sheet(wsData);
-            XLSX.utils.book_append_sheet(wb, ws, "Expense Summary");
-            
-            const fileName = `Divinam_Expenses_${new Date().toISOString().split('T')[0]}.xlsx`;
-            XLSX.writeFile(wb, fileName);
+            const ws = XLSX.utils.json_to_sheet(structuredRows);
+            XLSX.utils.book_append_sheet(wb, ws, "Expense Log Accounts");
+            XLSX.writeFile(wb, `Divinam_Structuray_Global_Expenses_${new Date().toISOString().split('T')[0]}.xlsx`);
         });
 
-        // Export PDF Module
+        // --- Safe PDF Document Compiler Module Engine ---
         document.getElementById('export-pdf-btn').addEventListener('click', () => {
-            if (typeof window.jspdf === 'undefined') {
-                alert('PDF Engine is still initializing. Please wait 2 seconds and click again.');
+            if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
+                alert('Rendering engines components loading context. Try again.');
                 return;
             }
-            const filter = document.getElementById('employee-filter').value.toLowerCase();
-            const filteredData = expenses.filter(e => !filter || e.employeeName.toLowerCase().includes(filter));
+            const nameVal = employeeFilterInput.value.trim().toLowerCase();
+            const targetedRows = allExpenses.filter(e => !nameVal || e.employeeName?.toLowerCase().includes(nameVal));
             
-            if (filteredData.length === 0) { 
-                alert('No data entries found to export.'); 
-                return; 
+            if (targetedRows.length === 0) { alert('No targeted datasets mapped.'); return; }
+
+            let ResolvedPDFContext;
+            if (window.jspdf && window.jspdf.jsPDF) {
+                ResolvedPDFContext = window.jspdf.jsPDF;
+            } else if (window.jsPDF) {
+                ResolvedPDFContext = window.jsPDF;
+            } else {
+                alert('Failed initialization vectors of rendering components modules.');
+                return;
             }
 
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+            const reportDoc = new ResolvedPDFContext({ orientation: 'landscape', unit: 'mm', format: 'a4' });
             
-            doc.setFillColor(0, 51, 102); 
-            doc.rect(0, 0, 297, 25, 'F');
+            // Layout Primary Header Styling Context Elements
+            reportDoc.setFillColor(0, 51, 102); 
+            reportDoc.rect(0, 0, 297, 24, 'F');
             
-            doc.setFont("Helvetica", "bold");
-            doc.setFontSize(18);
-            doc.setTextColor(255, 255, 255);
-            doc.text("DIVINAM STRUCTURAY PVT. LTD.", 14, 16);
+            reportDoc.setFont("Helvetica", "bold");
+            reportDoc.setFontSize(16);
+            reportDoc.setTextColor(255, 255, 255);
+            reportDoc.text("DIVINAM STRUCTURAY PVT. LTD.", 14, 15);
             
-            doc.setFont("Helvetica", "normal");
-            doc.setFontSize(11);
-            doc.text("Employee Expense Management Summary Report", 210, 16);
+            reportDoc.setFont("Helvetica", "normal");
+            reportDoc.setFontSize(10);
+            reportDoc.text("Comprehensive Employee Ledger Expense Statement Report", 195, 15);
 
-            const totalSpent = filteredData.reduce((sum, e) => sum + e.amount, 0);
-            const totalAdv = filteredData.reduce((sum, e) => sum + e.advance, 0);
-            const netBalance = totalSpent - totalAdv;
+            // Calculation Metrics Pipeline Compilation
+            const spentSum = targetedRows.reduce((a, b) => a + (b.amount || 0), 0);
+            const advSum = targetedRows.reduce((a, b) => a + (b.advance || 0), 0);
+            const absoluteBalance = spentSum - advSum;
 
-            doc.setTextColor(50, 50, 50);
-            doc.setFontSize(10);
-            doc.text(`Report Generated: ${new Date().toLocaleDateString()}`, 14, 35);
-            doc.text(`Total Records: ${filteredData.length}`, 14, 41);
+            reportDoc.setTextColor(60, 60, 60);
+            reportDoc.setFontSize(9);
+            reportDoc.text(`Document Generation Date: ${new Date().toLocaleDateString('en-IN')}`, 14, 33);
+            reportDoc.text(`Total Indexed Ledger Transactions: ${targetedRows.length}`, 14, 39);
             
-            doc.setFont("Helvetica", "bold");
-            doc.text(`Total Spent: Rs. ${totalSpent.toFixed(2)}`, 110, 35);
-            doc.text(`Total Advances: Rs. ${totalAdv.toFixed(2)}`, 110, 41);
-            doc.text(`Net Balance: Rs. ${Math.abs(netBalance).toFixed(2)} (${netBalance >= 0 ? 'Payable' : 'Refundable'})`, 110, 47);
+            reportDoc.setFont("Helvetica", "bold");
+            reportDoc.text(`Total Ledger Debits: Rs. ${spentSum.toFixed(2)}`, 115, 33);
+            reportDoc.text(`Total Corporate Advances: Rs. ${advSum.toFixed(2)}`, 115, 39);
+            reportDoc.text(`Net Account Settlement Due: Rs. ${Math.abs(absoluteBalance).toFixed(2)} (${absoluteBalance >= 0 ? 'Payable to Employee' : 'Refundable to Company'})`, 115, 45);
 
-            const bodyRows = filteredData.map(e => [
-                e.employeeName,
-                e.projectName,
-                e.date,
-                e.type,
-                `Rs. ${e.amount.toFixed(2)}`,
-                `Rs. ${e.advance.toFixed(2)}`,
+            const matrixBodyData = targetedRows.map(e => [
+                e.employeeName || '-',
+                e.projectName || 'General',
+                e.date || '-',
+                e.type || '-',
+                `Rs. ${(e.amount || 0).toFixed(2)}`,
+                `Rs. ${(e.advance || 0).toFixed(2)}`,
                 `Rs. ${(e.amount - e.advance).toFixed(2)}`,
                 e.checkerName || '-',
-                e.description
+                e.description || '-'
             ]);
 
-            doc.autoTable({
-                startY: 54,
-                head: [["Employee", "Project", "Date", "Category", "Spent Amount", "Advance Recd.", "Net Balance", "Verifier", "Description"]],
-                body: bodyRows,
-                headStyles: { fillColor: [0, 51, 102], textColor: [255, 255, 255] },
-                alternateRowStyles: { fillColor: [245, 247, 250] },
-                styles: { fontSize: 9, cellPadding: 3 },
+            reportDoc.autoTable({
+                startY: 52,
+                head: [["Employee Name", "Project Mapped", "Date Logged", "Category Module", "Debit Amount", "Advance Fund", "Net Status Balance", "Verifier", "Description Details"]],
+                body: matrixBodyData,
+                headStyles: { fillColor: [0, 51, 102], textColor: [255, 255, 255], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [244, 246, 249] },
+                styles: { fontSize: 8.5, cellPadding: 2.5 },
                 columnStyles: {
                     4: { halign: 'right' },
                     5: { halign: 'right' },
@@ -501,14 +519,12 @@
                 }
             });
 
-            const dateStr = new Date().toISOString().split('T')[0];
-            doc.save(`Divinam_Expense_Report_${dateStr}.pdf`);
+            reportDoc.save(`Divinam_Settlement_Ledger_Report_${new Date().toISOString().split('T')[0]}.pdf`);
         });
 
-        window.onload = () => {
-            document.getElementById('date').valueAsDate = new Date();
-            loadExpenses();
-        };
+        // Application Native Document Bootloader Lifecycle
+        document.getElementById('date').valueAsDate = new Date();
+        signInAnonymously(auth).catch(err => console.error("Identity core provider failure node:", err));
     </script>
 </body>
 </html>
