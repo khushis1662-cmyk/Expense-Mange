@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Divinam Structuray - Expense Tracker</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <style>
@@ -144,13 +146,13 @@
                 </div>
 
                 <div class="flex gap-4">
-                    <button id="export-csv-btn" 
-                        class="flex-1 py-3 px-4 rounded-lg border border-primary text-primary hover:bg-gray-50 flex items-center justify-center">
-                        📥 Export CSV
+                    <button id="export-excel-btn" 
+                        class="flex-1 py-3 px-4 rounded-lg border border-green-600 text-green-700 hover:bg-green-50 flex items-center justify-center font-medium">
+                        📊 Export Excel (.xlsx)
                     </button>
                     <button id="export-pdf-btn" 
-                        class="flex-1 py-3 px-4 rounded-lg bg-red-600 text-white hover:bg-red-700 flex items-center justify-center">
-                        📄 Export PDF
+                        class="flex-1 py-3 px-4 rounded-lg bg-red-600 text-white hover:bg-red-700 flex items-center justify-center font-medium">
+                        📄 Export PDF Report
                     </button>
                 </div>
 
@@ -196,15 +198,30 @@
         let expenses = [];
         let currentFile = null;
 
+        // Auto-configure standard fallback storage if specialized window hooks aren't active
+        if (!window.storage) {
+            window.storage = {
+                get: async (key) => ({ value: localStorage.getItem(key) }),
+                set: async (key, val) => localStorage.setItem(key, val),
+                delete: async (key) => localStorage.removeItem(key),
+                list: async (prefix) => {
+                    const keys = Object.keys(localStorage).filter(k => k.startsWith(prefix));
+                    return { keys };
+                }
+            };
+        }
+
         async function loadExpenses() {
             try {
-                const result = await window.storage.list('expense:', true);
+                const result = await window.storage.list('expense:');
                 if (result && result.keys) {
                     expenses = [];
                     for (const key of result.keys) {
-                        const data = await window.storage.get(key, true);
+                        const data = await window.storage.get(key);
                         if (data && data.value) {
-                            expenses.push(JSON.parse(data.value));
+                            try {
+                                expenses.push(JSON.parse(data.value));
+                            } catch(e) { console.error(e); }
                         }
                     }
                     expenses.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -267,7 +284,7 @@
                     createdAt: new Date().toISOString()
                 };
 
-                await window.storage.set(`expense:${expense.id}`, JSON.stringify(expense), true);
+                await window.storage.set(`expense:${expense.id}`, JSON.stringify(expense));
                 showMessage('success', 'Expense added successfully!');
                 
                 document.getElementById('employee-name').value = '';
@@ -333,7 +350,7 @@
                         <td class="px-3 py-4 text-sm text-right text-green-600 font-bold">₹${e.advance.toFixed(2)}</td>
                         <td class="px-3 py-4 text-sm">${e.checkerName || '-'}</td>
                         <td class="px-3 py-4 text-center">
-                            ${e.billFile ? `<a href="${e.billFile}" download="${e.billFileName}" class="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-xs font-medium">📎 View/Download</a>` : '<span class="text-gray-400 text-xs">No Bill</span>'}
+                            ${e.billFile ? `<a href="${e.billFile}" download="${e.billFileName}" class="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-xs font-medium">📎 Download</a>` : '<span class="text-gray-400 text-xs">No Bill</span>'}
                         </td>
                         <td class="px-3 py-4 text-right">
                             <button onclick="deleteExpense('${e.id}')" class="text-red-600 hover:text-red-900">
@@ -381,8 +398,8 @@
 
         async function deleteExpense(id) {
             if (confirm('Delete this expense?')) {
-                await window.storage.delete(`expense:${id}`, true);
-                showMessage('success', 'Deleted');
+                await window.storage.delete(`expense:${id}`);
+                showMessage('success', 'Deleted successfully');
                 loadExpenses();
                 setTimeout(() => hideMessage(), 2000);
             }
@@ -394,39 +411,106 @@
             render();
         });
 
-        document.getElementById('export-csv-btn').addEventListener('click', () => {
+        // FIXED EXCEL DOWNLOAD ROUINTE
+        document.getElementById('export-excel-btn').addEventListener('click', () => {
             const filter = document.getElementById('employee-filter').value.toLowerCase();
-            const data = expenses.filter(e => !filter || e.employeeName.toLowerCase().includes(filter));
-            if (data.length === 0) { alert('No data'); return; }
+            const filteredData = expenses.filter(e => !filter || e.employeeName.toLowerCase().includes(filter));
+            
+            if (filteredData.length === 0) { 
+                alert('No data available to export.'); 
+                return; 
+            }
 
-            const rows = [
-                ["Employee", "Project", "Date", "Category", "Spent", "Advance", "Checker", "Bill"],
-                ...data.map(e => [e.employeeName, e.projectName, e.date, e.type, e.amount, e.advance, e.checkerName || '', e.billFile ? 'Yes' : 'No'])
-            ];
+            const wsData = filteredData.map(e => ({
+                "Employee Name": e.employeeName,
+                "Project Name": e.projectName,
+                "Date": e.date,
+                "Category": e.type,
+                "Spent Amount (INR)": e.amount,
+                "Advance Received (INR)": e.advance,
+                "Net Balance (INR)": e.amount - e.advance,
+                "Verifier/Checker": e.checkerName || 'N/A',
+                "Description": e.description,
+                "Has Bill Attached": e.billFile ? 'Yes' : 'No'
+            }));
 
-            const csv = rows.map(r => r.join(',')).join('\n');
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `expenses_${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(wsData);
+            XLSX.utils.book_append_sheet(wb, ws, "Expense Summary");
+            
+            const fileName = `Divinam_Expenses_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
         });
 
+        // FIXED PDF DOWNLOAD ROUTINE
         document.getElementById('export-pdf-btn').addEventListener('click', () => {
             const filter = document.getElementById('employee-filter').value.toLowerCase();
-            const data = expenses.filter(e => !filter || e.employeeName.toLowerCase().includes(filter));
-            if (data.length === 0) { alert('No data'); return; }
+            const filteredData = expenses.filter(e => !filter || e.employeeName.toLowerCase().includes(filter));
+            
+            if (filteredData.length === 0) { 
+                alert('No data available to export.'); 
+                return; 
+            }
 
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.text("Expense Report", 14, 20);
+            const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+            
+            // Header Color Block
+            doc.setFillColor(0, 51, 102); 
+            doc.rect(0, 0, 297, 25, 'F');
+            
+            doc.setFont("Helvetica", "bold");
+            doc.setFontSize(18);
+            doc.setTextColor(255, 255, 255);
+            doc.text("DIVINAM STRUCTURAY PVT. LTD.", 14, 16);
+            
+            doc.setFont("Helvetica", "normal");
+            doc.setFontSize(11);
+            doc.text("Employee Expense Management Summary Report", 210, 16);
+
+            // Calculations Block
+            const totalSpent = filteredData.reduce((sum, e) => sum + e.amount, 0);
+            const totalAdv = filteredData.reduce((sum, e) => sum + e.advance, 0);
+            const netBalance = totalSpent - totalAdv;
+
+            doc.setTextColor(50, 50, 50);
+            doc.setFontSize(10);
+            doc.text(`Report Generated: ${new Date().toLocaleDateString()}`, 14, 35);
+            doc.text(`Total Records: ${filteredData.length}`, 14, 41);
+            
+            doc.setFont("Helvetica", "bold");
+            doc.text(`Total Spent: Rs. ${totalSpent.toFixed(2)}`, 110, 35);
+            doc.text(`Total Advances: Rs. ${totalAdv.toFixed(2)}`, 110, 41);
+            doc.text(`Net Balance: Rs. ${Math.abs(netBalance).toFixed(2)} (${netBalance >= 0 ? 'Payable' : 'Refundable'})`, 110, 47);
+
+            const bodyRows = filteredData.map(e => [
+                e.employeeName,
+                e.projectName,
+                e.date,
+                e.type,
+                `Rs. ${e.amount.toFixed(2)}`,
+                `Rs. ${e.advance.toFixed(2)}`,
+                `Rs. ${(e.amount - e.advance).toFixed(2)}`,
+                e.checkerName || '-',
+                e.description
+            ]);
+
             doc.autoTable({
-                startY: 30,
-                head: [["Employee", "Project", "Date", "Type", "Spent", "Advance"]],
-                body: data.map(e => [e.employeeName, e.projectName, e.date, e.type, `₹${e.amount.toFixed(2)}`, `₹${e.advance.toFixed(2)}`])
+                startY: 54,
+                head: [["Employee", "Project", "Date", "Category", "Spent Amount", "Advance Recd.", "Net Balance", "Verifier", "Description"]],
+                body: bodyRows,
+                headStyles: { fillColor: [0, 51, 102], textColor: [255, 255, 255] },
+                alternateRowStyles: { fillColor: [245, 247, 250] },
+                styles: { fontSize: 9, cellPadding: 3 },
+                columnStyles: {
+                    4: { halign: 'right' },
+                    5: { halign: 'right' },
+                    6: { halign: 'right' }
+                }
             });
-            doc.save(`expenses_${new Date().toISOString().split('T')[0]}.pdf`);
+
+            const dateStr = new Date().toISOString().split('T')[0];
+            doc.save(`Divinam_Expense_Report_${dateStr}.pdf`);
         });
 
         window.onload = () => {
@@ -436,3 +520,5 @@
     </script>
 </body>
 </html>
+
+```
